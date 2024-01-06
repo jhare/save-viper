@@ -20,6 +20,8 @@ def get_channel_id():
             forUsername=CHANNEL_NAME
         ).execute()
 
+        print(response);
+
         # Extract the channel ID
         channel_id = response['items'][0]['id']
 

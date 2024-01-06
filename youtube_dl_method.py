@@ -1,33 +1,35 @@
-import youtube_dl
 import json
-import os
+import subprocess
 
 # YouTube user URL
-user_url = 'https://www.youtube.com/@RapperViperVEVO/videos'
+user_url = "https://www.youtube.com/@RapperViperVEVO/videos"
 
-# Output file for video information
-output_file = 'videos.json'
+# Function to download videos and extract information
+def download_videos_and_save_info():
+    try:
+        # Run youtube-dl to download video information
+        command = f"youtube-dl -j --flat-playlist {user_url}"
+        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output, error = process.communicate()
 
-# Output directory for downloaded videos
-download_directory = '/media/jhare/data/viper'
+        if process.returncode != 0:
+            print(f"Error fetching video information: {error.decode('utf-8')}")
+            return
 
-# Function to download videos and save their titles and URLs
-def download_videos(url, output_file, download_dir):
-    ydl_opts = {
-        'quiet': False,
-        'outtmpl': os.path.join(download_dir, '%(title)s.%(ext)s'),
-    }
+        # Parse JSON output
+        videos_info = [json.loads(line) for line in output.decode('utf-8').split('\n') if line]
 
-    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-        with open(output_file, 'r') as json_file:
-            videos_info = json.load(json_file)
+        # Extract title and URL for each video
+        videos_data = [{'title': video['title'], 'url': video['url']} for video in videos_info]
 
-            for video in videos_info:
-                video_url = video['url']
-                print(f'Downloading video: {video["title"]}')
-                ydl.download([video_url])
+        # Save the result to a JSON file
+        with open('videos_info.json', 'w') as json_file:
+            json.dump(videos_data, json_file, indent=2)
 
-    print(f'All videos downloaded to {download_dir}')
+        print('Videos information fetched and saved to videos_info.json')
+
+    except Exception as e:
+        print(f"Error: {e}")
 
 # Execute the function
-download_videos(user_url, output_file, download_directory)
+download_videos_and_save_info()
